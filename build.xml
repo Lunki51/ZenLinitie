@@ -1,0 +1,112 @@
+<project name="ZenLinitie" default="run" basedir=".">
+    <description>
+        The famous board game
+    </description>
+    <!-- The path that contain the sources files -->
+    <property name="src" location="src"/>
+    <property name="resources" value="resources"/>
+    <!-- The path that contain the test sources files -->
+    <property name="srctest" location="test"/>
+    <!-- The path where to build -->
+    <property name="build" location="build"/>
+    <!-- The path where to build the jar -->
+    <property name="jar"  location="${build}/jar"/>
+    <!-- The path where to build the classes -->
+    <property name="class"  location="${build}/class"/>
+    <!-- The path where to build the javadoc -->
+    <property name="javadoc"  location="${build}/javadoc"/>
+    <!-- The path where to place the tests -->
+    <property name="test" value="${build}/test"/>
+    <!-- The name of the main class -->
+    <property name="mainClass" value="main/ZenLinitie"/>
+    <!-- The version of the program -->
+    <property name="version" value="1.0"/>
+    <!-- The name of the the jar archive -->
+    <property name="jarName" value="${mainClass}-${version}"/>
+
+    <target name="init">
+        <!-- Create the files used to store the data -->
+        <mkdir dir="${build}"/>
+        <mkdir dir="${jar}"/>
+        <mkdir dir="${class}"/>
+        <mkdir dir="${test}"/>
+        <mkdir dir="${test}/xml"/>
+        <mkdir dir="${test}/html"/>
+    </target>
+
+    <target name="compile" depends="init" description="compile the source ">
+        <!-- Compile the code from ${src} and place it into ${class} exluding the test package -->
+        <javac srcdir="${src}" destdir="${class}" includeantruntime="false">
+            <exclude name="test/**"/>
+        </javac>
+    </target>
+
+    <target name="jar" depends="compile" description="generate the distribution" >
+        <!-- Create the jar file with the compiled data in ${class}-->
+        <jar jarfile="${jar}/${jarName}.jar" basedir="${class}">
+            <resources>
+                <fileset dir="${resources}">
+                    <include name="**"/>
+                </fileset>
+            </resources>
+            <manifest>
+                <attribute name="Main-Class" value="${mainClass}"/>
+            </manifest>
+        </jar>
+    </target>
+
+
+    <target name="run" depends="jar">
+        <!-- Run the built jar at ${jar} -->
+        <java jar="${jar}/${jarName}.jar" fork="true"/>
+
+    </target>
+
+    <target name="clean">
+        <!-- Clean all the build files -->
+        <delete dir="build"/>
+    </target>
+
+    <target name="javadoc">
+        <!-- Create the javadoc of the code -->
+        <delete dir="${javadoc}"/>
+        <javadoc author="true"
+                 private="true"
+                 destdir="${javadoc}">
+            <fileset dir="${src}">
+                <include name="**"/>
+            </fileset>
+            <fileset dir="${srctest}">
+                <include name="**"/>
+            </fileset>
+        </javadoc>
+    </target>
+
+    <target name="test-compile" depends="compile" description="compile the test ">
+        <!-- Compile the code from ${src}/test and place it into ${test} -->
+        <javac srcdir="${srctest}/test" destdir="${test}" includeantruntime="true">
+            <classpath>
+                <pathelement path="${class}"/>
+            </classpath>
+        </javac>
+    </target>
+
+    <target name="test" depends="test-compile">
+        <!-- Launch all the test classes and make an HTML and a XML report -->
+        <junit printsummary="on" haltonfailure="off" fork="true" includeantruntime="true">
+            <classpath>
+                <pathelement path="${test}"/>
+                <pathelement path="${class}"/>
+                <pathelement path="${java.class.path}"/>
+            </classpath>
+            <formatter type="xml"/>
+            <batchtest todir="${test}/xml">
+                <fileset dir="${srctest}" includes="test/*.java"/>
+            </batchtest>
+        </junit>
+        <junitreport todir="${test}">
+            <fileset dir="${test}/xml" includes="**"/>
+            <report format="frames" todir="${test}/html"/>
+        </junitreport>
+    </target>
+</project>
